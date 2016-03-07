@@ -1,0 +1,61 @@
+---
+title: "ian_final"
+author: "ian johnson"
+date: "March 6, 2016"
+output: html_document
+---
+
+```{r setup, set-options, include=FALSE, echo=FALSE, cache=FALSE}
+library(ncdf4)
+library(ggplot2)
+library(devtools)
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+library(lattice)
+
+ncname <- "NOAA_Daily_phi_500mb"
+ncfname <- paste(ncname, ".nc", sep = "")
+dname <- "phi" #For variable name phi
+ncin <- nc_open(ncfname)
+setwd('~/Desktop/Columbia/EDAV/Project2')
+
+df_ian = read.csv('GlobalFloodsRecord.csv', fileEncoding="macroman", stringsAsFactors = FALSE)
+# Fix dataset
+fix.index = c(2,8,22,30)
+colnames(df_ian)[fix.index] = c("Annual.DFO", "Detailed.Locations", "News", "Notes")
+num.cols = c(2,12,13,14,15,17,18,19,20,21)
+df_ian[,num.cols] <- sapply(df_ian[,num.cols], as.numeric)
+df_ian$X <- NULL
+
+# format dates (just using begin dates for now)
+df_ian$newDate <- as.Date(df_ian$Began, "%e-%b-%y")
+```
+
+
+## Basic flood data
+Here we show basic flooding statistics. The following graphs represent the number of flooding events per month for each year, and we can see that some years exhibit increased flooding in the late summer months. 
+
+```{r echo=FALSE,  include=FALSE}
+df_ian$year <- format(df_ian$newDate, format="%Y")
+df_ian$year <- as.numeric(df_ian$year)
+df_ian$month <- format(df_ian$newDate, format="%b")
+df_ian$monthInt <- format(df_ian$newDate, format="%m")
+df_ian$monthInt <- as.numeric(df_ian$monthInt)
+df_ian$month <- as.factor(df_ian$month)
+```
+
+```{r scatterplot, fig.width=14, fig.height=14, echo=FALSE, results="hide"}
+##### Trellis plot for flood counts per year
+histogram(
+  ~factor(
+    format(df_ian$newDate,"%b"),
+    levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  ) | factor(
+    format(newDate,"'%y")
+  ),
+  data=df_ian, layout=(c(3,6)),
+  main="Flood Counts by year and month",
+  ylab="Flood Count",
+  xlab="Year"
+)
+```
