@@ -1,33 +1,51 @@
 ---
-title: "ggsmock2_final.rmd"
-author: "ian johnson"
-date: "March 7, 2016"
-output: html_document
+title: "Floods Around the World, 1985-2015"
+author: "Team ggsmock2"
+output:
+  html_document:
+    theme: readable
 ---
+## Introduction
+
+## Monthly Flood Timeline
+Here we present an interactive timeline of the flooding events from 1985 to 2015. The size of the circles indicate the number of people that were displaced as a result of the flood. You can pause the timeline and hover over specific flooding event to find out more details about it.
+
+<script src='scripts/d3.min.js'></script>
+<script src="scripts/queue.min.js"></script>
+<script src="scripts/jquery-2.2.1.min.js"></script>
+<script src="scripts/d3.slider.js"></script>
+<script src="scripts/main.js"></script>
+<link href="style/d3.slider.css" rel="stylesheet">
+<link href="style/main.css" rel="stylesheet">
+<style>.container { margin-left: -40px; }</style>
+
+<div class="container">
+<div id="slider"></div>
+<div id="map">
+<div id="current-month"></div>
+<div id="play-pause-button"><a id="play-pause-link" href="#" onclick="return false;">❙❙ Pause</a></div>
+</div>
+<div id="tip">(Pause and hover over the floods to see more information!)</div>
+<div id="tooltip" class="tooltip"></div>
+</div>
 
 ```{r setup, include=FALSE}
 # Put your libs here:
 library(ncdf4)
 library(ggplot2)
 library(devtools)
-library(ggbiplot)
+# library(ggbiplot)
 library(lattice)
-
-setwd('~/Desktop/Columbia/EDAV/Project2')
 
 # Import the two datasets
 ncin <- nc_open("NOAA_Daily_phi_500mb.nc")
 flood_df = read.csv('GlobalFloodsRecord.csv', fileEncoding="macroman", stringsAsFactors = FALSE)
 ```
 
-
-
-
-
-## Basic flood data
+## Preliminary Flood Data Analysis
 Here we show basic flooding statistics. The following graphs represent the number of flooding events per month for each year, and we can see that some years exhibit increased flooding in the late summer months. 
 
-```{r scatterplot, fig.width=14, fig.height=14, echo=FALSE, results="hide"}
+```{r scatterplot, fig.width=12, fig.height=12, echo=FALSE, results="hide", fig.align='center'}
 # Format dates for parsing
 df_ian = data.frame(as.Date(flood_df$Began, "%e-%b-%y"))
 names(df_ian) = c("newDate")
@@ -47,4 +65,260 @@ histogram(
   ylab="Flood Count",
   xlab="Year"
 )
+```
+
+## Geopotential Height Data
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+library(ncdf4)
+library(chron)
+library(RColorBrewer)
+library(lattice)
+ncname <- "NOAA_Daily_phi_500mb"
+ncfname <- paste(ncname, ".nc", sep = "")
+dname <- "phi" #For variable name phi
+ncin <- nc_open(ncfname)
+# Open NETCDF data file
+
+lon <- ncvar_get(ncin, "X")
+lon <- ifelse(lon>180, lon-360, lon)
+# Longitude
+lat <- ncvar_get(ncin, "Y", verbose = F)
+# Latitude
+time_var <- ncvar_get(ncin, "T")
+tunits <- ncatt_get(ncin, "T", "units")
+# Time
+
+phi.array <- ncvar_get(ncin, dname)
+dpoint <- ncatt_get(ncin, dname, "pointwidth")
+dhistory <- ncatt_get(ncin, dname, "history")
+dcalendar <- ncatt_get(ncin, dname, "calendar")
+dcenter <- ncatt_get(ncin, dname, "center")
+dgribparam <- ncatt_get(ncin, dname, "gribparam")
+dgribleveltype <- ncatt_get(ncin, dname, "gribleveltype")
+dgribvariable <- ncatt_get(ncin, dname, "gribvariable")
+dPDS_TimeRange <- ncatt_get(ncin, dname, "PDS_TimeRange")
+dprocess <- ncatt_get(ncin, dname, "process")
+dGRIBgridcode <- ncatt_get(ncin, dname, "GRIBgridcode")
+dgribNumBits <- ncatt_get(ncin, dname, "gribNumBits")
+dgribfield <- ncatt_get(ncin, dname, "gribfield")
+dsubcenter <- ncatt_get(ncin, dname, "subcenter")
+dscale_min <- ncatt_get(ncin, dname, "scale_min")
+dgrib_name <- ncatt_get(ncin, dname, "grib_name")
+dmissing_value <- ncatt_get(ncin, dname, "missing_value")
+dPTVersion <- ncatt_get(ncin, dname, "PTVersion")
+dscale_max <- ncatt_get(ncin, dname, "scale_max")
+dexpires <- ncatt_get(ncin, dname, "expires")
+dunits <- ncatt_get(ncin, dname, "units")
+dlong_name <- ncatt_get(ncin, dname, "long_name")
+dstandard_name <- ncatt_get(ncin, dname, "standard_name")
+# Phi variable and attributes
+
+nc_close(ncin)
+#Close file
+
+tustr <- strsplit(tunits$value, " ")
+tdstr <- strsplit(unlist(tustr)[3], "-")
+tmonth = as.integer(unlist(tdstr)[2])
+tday = as.integer(unlist(tdstr)[3])
+tyear = as.integer(unlist(tdstr)[1])
+# split the time units string into fields
+
+phi.array[phi.array == dmissing_value$value] <- NA
+# Replace NETCDF missing_values with R NAs
+
+n_days <- dim(phi.array)[3]
+# Total number of days
+```
+
+We compute the approximate average and median geopotential height (phi) data for New York City for every day for the last 65 years. More specifically, these calculations are performed over the 2.5 degree by 2.5 degree geo-coordinate grid that contains New York City.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+NYC.lon = which(lon==-75.0)
+NYC.lat = which(lat==40.0)
+NYC.mean = mean(phi.array[NYC.lon,NYC.lat,])
+NYC.median = median(phi.array[NYC.lon,NYC.lat,])
+```
+
+* Mean: `r NYC.mean`
+* Median: `r NYC.median`
+
+## Flood data
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+library(ggplot2)
+library(lubridate)
+library(lattice)
+df_c = read.csv('GlobalFloodsRecord.csv', stringsAsFactors = FALSE)
+# Fix dataset
+n <- dim(df_c)[1]
+for(i in 1:n){
+  df_c[i,15] <- gsub(",","",df_c[i,15])
+}
+# Clean Damage (USD) [get rid of commas]
+fix.index = c(2,8,22,30)
+colnames(df_c)[fix.index] = c("Annual.DFO", "Detailed.Locations", "News", "Notes")
+num.cols = c(2,12,13,14,15,17,18,19,20,21)
+df_c[,num.cols] <- sapply(df_c[,num.cols], as.numeric)
+df_c$X <- NULL
+
+```
+
+
+### Affected sq. km
+The following diagrams are lattice plots for the average area in square kilometers affected by floods per month and per year. This information is broken up into two full decades: the 1990s and the 2000s.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+Floods_1990s <- subset(df_c,(year(dmy(df_c$Began)) <= 1999) & (year(dmy(df_c$Began)) >= 1990),
+                       select=c(Began,Damage..USD.,Affected.sq.km))
+
+Floods_1990s_Agg <- aggregate(Floods_1990s[c("Affected.sq.km")],
+                              by=list(YEAR=year(dmy(Floods_1990s$Began)),
+                                      MONTH=month(dmy(Floods_1990s$Began))),
+                              FUN=mean,na.rm=FALSE)
+# create factors with value labels 
+year90.f<-factor(Floods_1990s_Agg$YEAR,
+               levels=c(1990,1991,1992,1993,1994,1995,1996,1997,1998,1999)) 
+month90.f <-factor(Floods_1990s_Agg$MONTH,
+                 levels=c(1,2,3,4,5,6,7,8,9,10,11,12),
+               labels=c(1,2,3,4,5,6,7,8,9,10,11,12))#c("Jan","Feb","Mar",
+                      #  "Apr","May","Jun","Jul",
+                      #  "Aug","Sep","Oct","Nov","Dec")) 
+
+barchart(Floods_1990s_Agg$Affected.sq.km~month90.f|year90.f,layout=(c(2,5)),
+          main="Average Affected Sq. Km. Per Month Per Year: 1990s",
+          xlab="Month",
+          ylab="Affected Sq. Km.")
+
+Floods_2000s <- subset(df_c,(year(dmy(df_c$Began)) <= 2009) & (year(dmy(df_c$Began)) >= 2000),
+                       select=c(Began,Damage..USD.,Affected.sq.km))
+
+Floods_2000s_Agg <- aggregate(Floods_2000s[c("Affected.sq.km")],
+                              by=list(YEAR=year(dmy(Floods_2000s$Began)),
+                                      MONTH=month(dmy(Floods_2000s$Began))),
+                              FUN=mean,na.rm=FALSE)
+
+year00.f<-factor(Floods_2000s_Agg$YEAR,
+               levels=c(2000,2001,2002,2003,2004,2005,2006,2007,2008,2009)) 
+month00.f <-factor(Floods_2000s_Agg$MONTH,
+                 levels=c(1,2,3,4,5,6,7,8,9,10,11,12),
+                 labels=c(1,2,3,4,5,6,7,8,9,10,11,12))#c("Jan","Feb","Mar",
+                        #  "Apr","May","Jun","Jul",
+                        #  "Aug","Sep","Oct","Nov","Dec")) 
+
+barchart(Floods_2000s_Agg$Affected.sq.km~month00.f|year00.f,layout=(c(2,5)),
+         main="Average Affected Sq. Km. Per Month Per Year: 2000s",
+         xlab="Month",
+         ylab="Affected Sq. Km.")
+```
+
+### ANOVA Analysis
+We examine whether there are any statistically significant differences in area affected by floods among the various months and years, as well as between the last two decades. In order to do so, we perform several ANOVA (Analysis of Variance) tests, all at a rejection level of 0.05. All of these tests are done on the assumption that the areas are derived from a Gaussian distribution with an unknown but fixed variance.
+
+The first is a one-way ANOVA test for the null hypothesis that the average area affected is the same between the 1990s and the 2000s. This test results in a p-value of 0.00285, so we can reject the null hypothesis.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+Floods_90s_00s <- subset(df_c,(year(dmy(df_c$Began)) <= 2009) & (year(dmy(df_c$Began)) >= 1990),
+                         select=c(Began,Damage..USD.,Affected.sq.km))
+Floods_90s_00s$MONTH <- month(dmy(Floods_90s_00s$Began))
+Floods_90s_00s$YEAR <- year(dmy(Floods_90s_00s$Began))
+Floods_90s_00s$DECADE <- ifelse(Floods_90s_00s$YEAR < 2000,"90s","00s")
+Floods_90s_00s$MONTH <- factor(Floods_90s_00s$MONTH,
+                               levels=c(1,2,3,4,5,6,7,8,9,10,11,12),
+                               labels=c("Jan","Feb","Mar",
+                                        "Apr","May","Jun","Jul",
+                                        "Aug","Sep","Oct","Nov","Dec"))
+Floods_90s_00s$YEAR <- factor(Floods_90s_00s$YEAR,
+                              levels=c(1990,1991,1992,1993,1994,1995,
+                                       1996,1997,1998,1999,2000,2001,
+                                       2002,2003,2004,2005,2006,2007,
+                                       2008,2009))
+one_way.fit <- aov(Affected.sq.km ~ DECADE, data = Floods_90s_00s)
+summary(one_way.fit)
+
+#two_way.fit <- aov(Affected.sq.km ~ DECADE * MONTH, data = Floods_90s_00s)
+#summary(two_way.fit)
+
+```
+
+The second is a two-way ANOVA test for the null hypothesis that the average area affected is the same for all months and all years between 1990 and 2009. This test provides a p-value of 0.00329 for the month, 1.68e-05 for the year, but 0.37483 for the interaction between month and year. The results imply that there is a statistically significant difference in average area affected per month, as well as per year. These results make sense considering the effect of seasonality on the weather: different months of the year correspond to the rainy season, and different years have different global weather patterns (ex. El Nino and La Nina). However, both of these factors together do not have a statistically significant impact on the average area affected by floods. Thus, even though there may be seasonal differences between months and between years, there has been little overall change in the scope of flood impact area within the past two full decades.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+two_way.fit <- aov(Affected.sq.km ~ MONTH * YEAR, data = Floods_90s_00s)
+summary(two_way.fit)
+```
+
+Regarding the apparent contradiction between the results of the two ANOVA tests: the one-way test showed that there is a per-decade difference when ignoring monthly and yearly seasonal trends, which the two-way test takes into account.
+
+## Monetary Damages
+The next set of diagrams are lattice plots for the average amount of damage in USD (United States dollars) due to floods per month and per year. This information is also split by the last two calendar decades.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+Floods_1990s_Agg_2 <- aggregate(Floods_1990s[c("Damage..USD.")],
+                              by=list(YEAR=year(dmy(Floods_1990s$Began)),
+                                      MONTH=month(dmy(Floods_1990s$Began))),
+                              FUN=mean,na.rm=TRUE)
+barchart(Floods_1990s_Agg_2$Damage..USD.~month90.f|year90.f,layout=(c(2,5)),
+         main="Average Damages (USD) Per Month Per Year: 1990s",
+         xlab="Month",
+         ylab="Damages (USD)",scales = list(y = list(log = 10)))
+Floods_2000s_Agg_2 <- aggregate(Floods_2000s[c("Damage..USD.")],
+                              by=list(YEAR=year(dmy(Floods_2000s$Began)),
+                                      MONTH=month(dmy(Floods_2000s$Began))),
+                              FUN=mean,na.rm=TRUE)
+barchart(Floods_2000s_Agg_2$Damage..USD.~month00.f|year00.f,layout=(c(2,5)),
+         main="Average Damages (USD) Per Month Per Year: 2000s",
+         xlab="Month",
+         ylab="Damages (USD)",scales = list(y = list(log = 10)))
+```
+
+### ANOVA Analysis
+
+We examine whether there are any statistically significant differences in flood damage among the various months and years, as well as between the last two decades. We run two ANOVA tests at a rejection level of 0.05. As before, all of these tests are done on the assumption that the damage values are derived from a Gaussian distribution with an unknown but fixed variance.
+
+The first is a one-way ANOVA test for the null hypothesis that the average value of flood damages is the same between the 1990s and the 2000s. This test results in a p-value of 0.0214, so we can reject the null hypothesis.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+one_way.fit <- aov(Damage..USD. ~ DECADE, data = Floods_90s_00s)
+summary(one_way.fit)
+
+#two_way.fit <- aov(Damage..USD. ~ DECADE * MONTH, data = Floods_90s_00s)
+#summary(two_way.fit)
+```
+
+The second is a two-way ANOVA test for the null hypothesis that the average value of damages is the same for all months and all years between 1990 and 2009. This test provides a p-value of 0.578 for the month, 0.449 for the year, and 1.0 for the interaction between month and year. We fail to reject the null hypothesis. One possible reason why the test suggests little change is that whenever floods happen, especially in vulnerable communities, they may cause similar levels of damage, regardless of when they occur.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+two_way.fit <- aov(Damage..USD. ~ MONTH * YEAR, data = Floods_90s_00s)
+summary(two_way.fit)
+
+#two_way.fit <- aov(Damage..USD. ~ DECADE * MONTH, data = Floods_90s_00s)
+#summary(two_way.fit)
+```
+
+## Trend Analysis
+The lattice plots provided a compact view of how the flood damage and impact area changed on average per month and per year. The ANOVA tests helped determine that there were statistically significant changes over time. However, we need additional visualizations to gain insight on what those changes look like.
+
+The following bar plot shows the average amount of flood damages per year. Some of the years with the highest values in damages had very high profile storms and weather patterns occur: 1991 had "the Perfect Storm" in New England, 1998 had El Nino, and Hurricane Katrina devastated New Orleans in 2005. Other than these extreme values, there is no observable trend between 1990 and 2009, confirming the results of the two-way ANOVA test. It is also worth noting that there is no data for flood damages after 2010. This finding may suggest that there are no floods that cause serious monetary damage after that time. However, the 2011 tsunami in Japan and Hurricane Sandy, among other events, render this notion highly unlikely.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+Floods_AllYears_Damage <- aggregate(df_c[c("Damage..USD.")],
+                        by=list(YEAR=year(dmy(df_c$Began))),
+                        FUN=mean,na.rm=TRUE)
+ggplot(Floods_AllYears_Damage,aes(x=YEAR,y=Damage..USD.))+
+  geom_bar(stat="identity")+labs(x="Year",y="Damage (USD)",
+                                 title="Average Damages (USD) Per Year")
+
+Floods_AllYears_Affected <- aggregate(df_c[c("Affected.sq.km")],
+                                    by=list(YEAR=year(dmy(df_c$Began))),
+                                    FUN=mean,na.rm=TRUE)
+
+```
+
+The next plot displays the average area impacted by floods over time. There is fluctuation over each decade, with less area affected towards the beginning of a decade, and an increasing area with each year until the end of the decade. This visualization supports the explanation of seasonality for the ANOVA analysis results.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, fig.align='center'}
+ggplot(Floods_AllYears_Affected,aes(x=YEAR,y=Affected.sq.km))+
+  geom_bar(stat="identity")+labs(x="Year",y="Affected sq. km.",
+                                 title="Average Affected sq. km. Per Year")
 ```
