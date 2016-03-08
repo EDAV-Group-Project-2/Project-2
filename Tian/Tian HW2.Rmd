@@ -6,7 +6,7 @@ output: html_document
 We are curious about the words that journalists use on floods. Specifically, we want to see if the words used change as the floods differ in severity. Here we choose to categorize floods by the number of deaths each flood causes.
 
 ```{r load data, include=FALSE}
-setwd('/Users/tianhaolu/Documents/Columbia\ classes/STAT\ 4701/HW2')
+setwd('~/Desktop/Columbia/EDAV/Project2')
 flood=read.csv('GlobalFloodsRecord.csv')
 names(flood)[30]='news'
 names(flood)[12]='Duration'

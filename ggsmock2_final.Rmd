@@ -8,10 +8,11 @@ output: html_document
 ```{r setup, include=FALSE}
 # Put your libs here:
 library(ncdf4)
+library(RNetCDF)
 library(ggplot2)
-library(devtools)
 library(ggbiplot)
 library(lattice)
+library(rworldmap)
 
 setwd('~/Desktop/Columbia/EDAV/Project2')
 
@@ -21,11 +22,18 @@ flood_df = read.csv('GlobalFloodsRecord.csv', fileEncoding="macroman", stringsAs
 ```
 
 
+## Introduction
+In this report, we summarize data from two datasets, one on geopotential height values in the northern hemisphere global region ranging from 35 degrees N to 70 degrees N, with a time dimensions ranging from 1944 to the present, and the other with details of flooding events from the time period ranging from 1985 to 2016. We present this data using visual representations that show the overall trends, and we gain insights into the trends and relationships between the following variables:
 
+- average geopotential height values across this time period
+- number of flooding events per year
+- average area affected by events
+- variation in amount of flooding between years
+- financial damage cause by these events
 
 
 ## Basic flood data
-Here we show basic flooding statistics. The following graphs represent the number of flooding events per month for each year, and we can see that some years exhibit increased flooding in the late summer months. 
+Here we show basic flooding statistics. The following graphs represent the number of flooding events per month for each year, and we can see that some years exhibit increased flooding in the late summer months.
 
 ```{r scatterplot, fig.width=14, fig.height=14, echo=FALSE, results="hide"}
 # Format dates for parsing
@@ -48,3 +56,9 @@ histogram(
   xlab="Year"
 )
 ```
+
+
+
+## Conclusions
+From out ANOVA analysis we conclude that there is a statisitcally sigificant difference between the value of the damaged caused by flooding in the 1990s and the 2000s. We also can see from the graphs that flood events occur around rivers and coastal regions, and when coupled with trellis plots of flooding events across months by year, there appear to be time periods of increased flooding that coorespond with months in late summer. 
+
