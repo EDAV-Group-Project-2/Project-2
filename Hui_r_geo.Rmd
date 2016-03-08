@@ -1,0 +1,106 @@
+---
+title: "r_geo"
+author: "Hui Su"
+date: "March 8, 2016"
+output: html_document
+---
+## Flood Death
+The following world map we plot death data in all flooding events from 1980s to 2010s. 
+ 
+```{r, warning=FALSE}
+library(ncdf4)
+library(RNetCDF)
+library(rworldmap)
+library(ggplot2)
+gf <- read.csv(file="~/Documents/columbia 2016Spring/EDAV/project/EDAV_Project_2/GlobalFloodsRecord.csv", header=TRUE, sep=",")
+flood.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
+                        dead=as.numeric(gf$Dead))
+world_map <- map_data("world")
+p <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+#Add map to base plot
+base_world <- p + geom_polygon(data=world_map, aes(x=long, y=lat, group=group), 
+                               colour="white", fill="grey")+ labs(title="World map Flood death")
+map_data <- 
+  base_world +
+  geom_point(data=flood.data, 
+             aes(x=Longitude, y=Latitude,color=-dead),size=1,alpha=I(0.6))
+map_data
+```
+## Flood Monthly Magnitude
+In the following maps, we plot flooding event of each month. We can find that the flooding may has some relationship with temperature. More flooding events happened in summer.  
+```{r,echo=FALSE}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+```{r, warning=FALSE}
+flood.month.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
+                              Magnitude=as.numeric(gf$Magnitude..M...), month=format(as.Date(gf$Began,format='%d-%b-%y'),"%m"))
+month_text=c("FlOOD_IN_JAN","FlOOD_IN_FEB","FlOOD_IN_MAR","FlOOD_IN_APR","FlOOD_IN_MAY","FlOOD_IN_JUN","FlOOD_IN_JUL","FlOOD_IN_AUG","FlOOD_IN_SEP","FlOOD_IN_OCT","FlOOD_IN_NOV","FlOOD_IN_DEC")
+world_map <- map_data("world")
+p <- ggplot() + coord_fixed() +xlab("") + ylab("")
+base_world <- p + geom_polygon(data=world_map, aes(x=long, y=lat, group=group),colour="white", fill="grey")
+flood.1.data<-subset(flood.month.data,month=="01")
+flood.2.data<-subset(flood.month.data,month=="02")
+flood.3.data<-subset(flood.month.data,month=="03")
+flood.4.data<-subset(flood.month.data,month=="04")
+flood.5.data<-subset(flood.month.data,month=="05")
+flood.6.data<-subset(flood.month.data,month=="06")
+flood.7.data<-subset(flood.month.data,month=="07")
+flood.8.data<-subset(flood.month.data,month=="08")
+flood.9.data<-subset(flood.month.data,month=="09")
+flood.10.data<-subset(flood.month.data,month=="10")
+flood.11.data<-subset(flood.month.data,month=="11")
+flood.12.data<-subset(flood.month.data,month=="12")
+map1 <- base_world + geom_point(data=flood.1.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[1])
+map2 <- base_world + geom_point(data=flood.2.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[2])
+map3 <- base_world + geom_point(data=flood.3.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[3])
+map4 <- base_world + geom_point(data=flood.4.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[4])
+map5 <- base_world + geom_point(data=flood.5.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[5])
+map6 <- base_world + geom_point(data=flood.6.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[6])
+map7 <- base_world + geom_point(data=flood.7.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[7])
+map8 <- base_world + geom_point(data=flood.8.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[8])
+map9 <- base_world + geom_point(data=flood.9.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[9])
+map10 <- base_world + geom_point(data=flood.10.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[10])
+map11 <- base_world + geom_point(data=flood.11.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[11])
+map12 <- base_world + geom_point(data=flood.12.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[12])
+multiplot(map1,map2,map3,map4,cols=2)
+multiplot(map5,map6,map7,map8,cols=2)
+multiplot(map9,map10,map11,map12,cols=2)
+```
+
