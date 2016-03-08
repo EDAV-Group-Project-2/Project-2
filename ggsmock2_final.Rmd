@@ -328,7 +328,7 @@ ggplot(Floods_AllYears_Affected,aes(x=YEAR,y=Affected.sq.km))+
                                  title="Average Affected sq. km. Per Year")
 ```
 
-## Keywords in Newsreporting
+## Keywords in News Reporting
 We are curious about the words that journalists use on floods. Specifically, we want to see if the words used change as the floods differ in severity. Here we choose to categorize floods by the number of deaths each flood causes.
 
 ```{r load data, include=FALSE}
@@ -524,7 +524,7 @@ if ('0' %in% words) {word_dead2=word_dead2[8:dim(word_dead2)[1],]}
 #gg + geom_area(aes(colour=word, fill=word))
 ```
 
-Here is a word cloud we generate, looking at floods causing deaths between 50 and 100. The keywords such as 'caused','desperation' and 'sept' appear large in size, indicating they tend to occur frequently in newsreporting on floods of this scale. 
+Here is a word cloud we generate, looking at floods causing deaths between 50 and 100. The keywords such as 'caused', 'desperation', and 'sept' appear large in size, indicating they tend to occur frequently in newsreporting on floods of this scale. 
 
 ```{r wordcloud_prep, include=TRUE, echo=FALSE, fig.align='center'}
 library(d3heatmap)
@@ -540,19 +540,19 @@ if (0 %in% rownames(wd)){wd=wd[2:dim(wd)[1],]}
 wordcloud(words,wd[,4])
 ```
 
-Interestingly, comparing the above word cloud against newsreporting on flood causing deaths between 100 and 500, we immediately see a difference. Now words such as 'feb','evacuated' and 'inundated' get more dense.
+Interestingly, comparing the above word cloud against newsreporting on flood causing deaths between 100 and 500, we immediately see a difference. Now words such as 'feb', 'evacuated', and 'inundated' get more dense.
 ```{r wordcloud, include=TRUE, echo=FALSE, fig.align='center'}
 wordcloud(words,wd[,5])
 ```
 
-Finally we plot an interactive heatmap to explore how these keywords change their density in newsporting, as the severity of floods increase.
+Finally we show an interactive heatmap to explore how the keywords change their density in newsporting, as the severity of floods increase.
 ```{r heatmap, include=TRUE, echo=FALSE, fig.align='center'}
 d3heatmap(wd, Colv=FALSE,scale = "column", colors = "Spectral",xaxis_font_size="10px")
 ```
 
 The heatmap performs a dendrogram clustering on words. As one may expect, we see 'flood' and 'flooded' nearby each other in the clustering while 'feb' and 'sept' are far away on the spectrum. Perhaps more interestingly, we observe that keyword such as 'abandon' is most dense in reportings on floods with deaths <=50.
 
-## What Caused the Floods
+## Causes of Floods
 In this section we look at the causes of the floods. We pick the most popular 6 causes and do a string matching to categorize the floods.
 ```{r cause_prep, include=FALSE}
 library(maps)
@@ -578,12 +578,12 @@ p <- p + geom_jitter( data=flood_cause[as.numeric(as.matrix(flood_cause$year))>=
     aes(x=as.numeric(as.matrix(Centroid.X)), 
      y=as.numeric(as.matrix(Centroid.Y)),size=as.numeric(as.matrix(Area)),color=causes,alpha=0.5)) 
 p=p+scale_size('area')
-p=p+ggplot2::annotate("text", x = 12, y = 100, size = 8, colour ="black")
+p=p+ggplot2::annotate("text", label = "Causes of Floods Around the World", x = 12, y = 100, size = 8, colour ="black")
 p
 ```
 
 ## Principle Component Analysis on Countries
-In this section, we performed priciple component analysis (PCA) on countries that experienced floods in a given year. Here we choose 7 variables from the GlobalFloodArchive data, namely Affected Area, Severity, Magnitude, Dead, Dispatched,Latitude and Longitude. 
+In this section, we performed priciple component analysis (PCA) on countries that experienced floods in a given year. Here we choose 7 variables from the GlobalFloodArchive data, namely Affected Area, Severity, Magnitude, Dead, Dispatched, Latitude and Longitude. 
 
 ```{r pca_prep, include=FALSE}
 library(scales)
@@ -606,13 +606,13 @@ ratio=temp$Dead/temp$Severity..
 colours_by_ratio <- rgb( 
   ramp( as.vector(rescale(ratio,c(0,1)))), 
   max = 255 )
-plot(PC1~PC2, data=projected, main= paste("PCA on flooded countries in ",yr),cex = .1, lty = "solid",col=colours_by_ratio,bg='white' )
+plot(PC1~PC2, data=projected, main= paste("PCA for Flood Affected Countries in ",yr),cex = .1, lty = "solid",col=colours_by_ratio,bg='white' )
 text(PC1~PC2, data=projected, labels=projected$country,cex=.8,col=colours_by_ratio)}
 ```
 
 We use a PCA dimensionality reduction to project the 7 chosen dimensions onto 2. Also we would like to investigate if there are clustering on these countries. We use a color coding from green to red that indicates the ratio of deaths against severity of the flood. This color thus indicates how damaging this flood is. The more shifted on the red, the more damaging it is.
 
-In this example we focus on floods in year 2000
+In this example we focus on floods in 2000:
 ```{r pca, include=TRUE,warning=FALSE, echo=FALSE, fig.align='center'}
 PCAcc(2000)
 ```
@@ -620,6 +620,107 @@ PCAcc(2000)
 We observe some clustering, such as the 4 floods in Brazil in the top part and the 2 floods in India in the bottom. The 2 PCs may be intepreted such that PC2 corresponds to how damaging a flood is, as most country-flood pairs in the upper half are red while the ones in the bottm are green
 
 However, we do notice that there isn't any clear classification on this plot between developped countries and developing countries. USA and Philippines are close to each other in the center and so are France and India on the left. Perhaps this suggests that flood is more of a global disaster regardless of the GDP or geo-location of a country.
+
+## Flood Death
+The following plot shows deaths related to flooding events between 1985 and 2015.
+ 
+```{r, warning=FALSE, fig.align='center', echo=FALSE}
+library(ncdf4)
+library(RNetCDF)
+library(rworldmap)
+library(ggplot2)
+gf <- read.csv(file="GlobalFloodsRecord.csv", header=TRUE, sep=",")
+flood.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
+                        dead=as.numeric(gf$Dead))
+world_map <- map_data("world")
+p <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+#Add map to base plot
+base_world <- p + geom_polygon(data=world_map, aes(x=long, y=lat, group=group), 
+                               colour="white", fill="grey")+ labs(title="Flood Related Deaths, 1985-2015")
+map_data <- 
+  base_world +
+  geom_point(data=flood.data, 
+             aes(x=Longitude, y=Latitude,color=-dead),size=1,alpha=I(0.6))
+map_data
+```
+
+## Flood Monthly Magnitude
+In the following maps, we plot flooding event of each month. We can find that the flooding may has some relationship with temperature. More flooding events have occurred between May and September.
+```{r,echo=FALSE}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+```{r, warning=FALSE, fig.align='center', echo=FALSE}
+flood.month.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
+                              Magnitude=as.numeric(gf$Magnitude..M...), month=format(as.Date(gf$Began,format='%d-%b-%y'),"%m"))
+month_text=c("Floods in January","Floods in February","Floods in March","Floods in April","Floods in May","Floods in June","Floods in July","Floods in August","Floods in September","Floods in October","Floods in November","Floods in December")
+world_map <- map_data("world")
+p <- ggplot() + coord_fixed() +xlab("") + ylab("")
+base_world <- p + geom_polygon(data=world_map, aes(x=long, y=lat, group=group),colour="white", fill="grey")
+flood.1.data<-subset(flood.month.data,month=="01")
+flood.2.data<-subset(flood.month.data,month=="02")
+flood.3.data<-subset(flood.month.data,month=="03")
+flood.4.data<-subset(flood.month.data,month=="04")
+flood.5.data<-subset(flood.month.data,month=="05")
+flood.6.data<-subset(flood.month.data,month=="06")
+flood.7.data<-subset(flood.month.data,month=="07")
+flood.8.data<-subset(flood.month.data,month=="08")
+flood.9.data<-subset(flood.month.data,month=="09")
+flood.10.data<-subset(flood.month.data,month=="10")
+flood.11.data<-subset(flood.month.data,month=="11")
+flood.12.data<-subset(flood.month.data,month=="12")
+map1 <- base_world + geom_point(data=flood.1.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[1])
+map2 <- base_world + geom_point(data=flood.2.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[2])
+map3 <- base_world + geom_point(data=flood.3.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[3])
+map4 <- base_world + geom_point(data=flood.4.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[4])
+map5 <- base_world + geom_point(data=flood.5.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[5])
+map6 <- base_world + geom_point(data=flood.6.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[6])
+map7 <- base_world + geom_point(data=flood.7.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[7])
+map8 <- base_world + geom_point(data=flood.8.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[8])
+map9 <- base_world + geom_point(data=flood.9.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[9])
+map10 <- base_world + geom_point(data=flood.10.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[10])
+map11 <- base_world + geom_point(data=flood.11.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[11])
+map12 <- base_world + geom_point(data=flood.12.data, aes(x=Longitude, y=Latitude),size=0.5,alpha=I(0.6))+labs(title=month_text[12])
+multiplot(map1,map2,map3,map4,cols=2)
+multiplot(map5,map6,map7,map8,cols=2)
+multiplot(map9,map10,map11,map12,cols=2)
+```
 
 ## Conclusion
 From out ANOVA analysis we conclude that there is a statisitcally sigificant difference between the value of the damaged caused by flooding in the 1990s and the 2000s. We also can see from the graphs that flood events occur around rivers and coastal regions, and when coupled with trellis plots of flooding events across months by year, there appear to be time periods of increased flooding that coorespond with months in late summer. 

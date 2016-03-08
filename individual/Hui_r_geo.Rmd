@@ -12,7 +12,7 @@ library(ncdf4)
 library(RNetCDF)
 library(rworldmap)
 library(ggplot2)
-gf <- read.csv(file="~/Documents/columbia 2016Spring/EDAV/project/EDAV_Project_2/GlobalFloodsRecord.csv", header=TRUE, sep=",")
+gf <- read.csv(file="GlobalFloodsRecord.csv", header=TRUE, sep=",")
 flood.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
                         dead=as.numeric(gf$Dead))
 world_map <- map_data("world")
