@@ -1,21 +1,27 @@
 ---
-title: "ian_final"
+title: "ggsmock2_final.rmd"
 author: "ian johnson"
-date: "March 6, 2016"
+date: "March 7, 2016"
 output: html_document
 ---
 
-```{r setup, set-options, include=FALSE, echo=FALSE, cache=FALSE}
+```{r setup, include=FALSE}
+# Put your libs here:
 library(ncdf4)
 library(ggplot2)
 library(devtools)
-install_github("vqv/ggbiplot")
 library(ggbiplot)
 library(lattice)
 
+
+
+# Import the two datasets
 ncin <- nc_open("NOAA_Daily_phi_500mb.nc")
 flood_df = read.csv('GlobalFloodsRecord.csv', fileEncoding="macroman", stringsAsFactors = FALSE)
 ```
+
+
+
 
 
 ## Basic flood data
@@ -32,7 +38,8 @@ histogram(
     format(df_ian$newDate,"%b"),
     levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
   ) | factor(
-    format(newDate,"'%y")
+    format(newDate,"%Y"),
+    level = c("85", "86", "87", "88", "89", "90", "91", "92", "3", "94", "95")
   ),
   data=df_ian, layout=(c(3,6)),
   main="Flood Counts by year and month",
