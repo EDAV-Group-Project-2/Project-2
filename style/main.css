@@ -1,0 +1,71 @@
+h1 {
+	font-size: 2.5em;
+}
+h4 {
+	margin: 0px 0px 5px 0px;
+}
+ul {
+	padding-left: 10px;
+	margin: 0;
+}
+
+.container {
+	font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+	max-width: 1000px;
+	margin: 0px auto 0px auto;
+}
+#current-month {
+	float: left;
+	position: relative;
+	font-size: 1.3em;
+	left: 15px;
+	top: 0px;
+	z-index: 1000;
+}
+
+#map {
+	margin: 0px auto 0px auto;
+}
+#month-name {
+	font-weight: bold;
+	font-size: 1.5em;
+}
+#svg {
+	margin: -75px auto 0px auto;
+}
+#play-pause-button {
+	position: relative;
+	top: 0px;
+	right: 10px;
+	float:right;
+	background-color: lightgrey;
+	width: 6em;
+	padding: 10px;
+	text-align: center;
+	font-size: 0.9em;
+	z-index: 999;
+}
+a#play-pause-link {
+	color: #000;
+	text-decoration: none;
+}
+#slider {
+	margin-bottom: 40px;
+	margin-top: 10px;
+}
+#tip {
+	font-size: 0.75em;
+	margin: -20px 0px 0px 10px;
+	text-align: right;
+}
+.tooltip {
+	position: absolute;
+	visibility: hidden;
+	font-size: 75%;
+	color: #333333;
+	background-color: #e6e6e6;
+	opacity: .95;
+	padding: 12px;
+	max-width: 500px;
+	font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+}
