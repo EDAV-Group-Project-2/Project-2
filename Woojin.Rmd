@@ -1,0 +1,25 @@
+---
+title: "Monthly Flood Events"
+author: "Woojin Kim"
+output:
+  html_document:
+    theme: readable
+---
+<script src='scripts/d3.min.js'></script>
+<script src="scripts/queue.min.js"></script>
+<script src="scripts/jquery-2.2.1.min.js"></script>
+<script src="scripts/d3.slider.js"></script>
+<script src="scripts/main.js"></script>
+<link href="style/d3.slider.css" rel="stylesheet">
+<link href="style/main.css" rel="stylesheet">
+<style>.container { margin-left: -40px; }</style>
+
+<div class="container">
+<div id="slider"></div>
+<div id="map">
+<div id="current-month"></div>
+<div id="play-pause-button"><a id="play-pause-link" href="#" onclick="return false;">❙❙ Pause</a></div>
+</div>
+<div id="tip">(Pause and hover over the floods to see more information!)</div>
+<div id="tooltip" class="tooltip"></div>
+</div>
