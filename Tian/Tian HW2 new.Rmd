@@ -1,0 +1,301 @@
+---
+title: "Tianhao Rmarkdown for HW2"
+output: html_document
+---
+##Keywords in Newsreporting
+We are curious about the words that journalists use on floods. Specifically, we want to see if the words used change as the floods differ in severity. Here we choose to categorize floods by the number of deaths each flood causes.
+
+```{r load data, include=FALSE}
+setwd('/Users/tianhaolu/Documents/Columbia\ classes/STAT\ 4701/HW2/Project-2/Tian')
+flood=read.csv('GlobalFloodsRecord_Tian.csv')
+names(flood)[30]='news'
+names(flood)[12]='Duration'
+names(flood)[18]='Area'
+names(flood)[15]='Damage'
+```
+
+We perform a TF-IDF(Term Frequency, Inverse Document Frequency) step on each different flood news reporting. Each corpus of documents is the news of floods causing deaths in a given interval (i.e. 10-50). After performing stemming, stopword removal and number removal, the TF-IDF step gets the highest 40 keywords for each corpus.
+
+```{r check spelling, include=FALSE}
+spellcheck=function(x){
+  return (gsub("\xca","",x))}
+flood$Country=lapply(flood$Country,spellcheck)
+flood$Country=unlist(lapply(flood$Country,function(x) gsub("^$|^ $", NA, x)))
+flood=flood[!is.na(flood[,4]), ]
+flood=flood[flood$Country!="#N/A", ]
+library(stringr)
+flood$Country=unlist(lapply(flood$Country,function(x) str_trim(x,side='both')))
+
+flood$Began=lapply(flood$Began,function(x) gsub("^$|^ $", NA, x))
+flood$Ended=lapply(flood$Ended,function(x) gsub("^$|^ $", NA, x))
+flood$Damage=lapply(flood$Damage,function(x) gsub("^$|^ $", NA, x))
+flood=flood[!is.na(flood[,10]), ]
+flood=flood[!is.na(flood[,11]), ]
+
+flood$Began=lapply(flood$Began,function(x) as.Date(strtoi(x), origin = "1899-12-30"))
+flood$Ended=lapply(flood$Ended,function(x) as.Date(strtoi(x), origin = "1899-12-30"))
+
+for (i in 1:dim(flood)[1]){
+  flood$year[i]=as.numeric(format(flood$Began[[i]],'%Y'))}
+flood$year=unlist(lapply(flood$year,function(x) as.numeric(x)))
+
+#get continent for country
+for (i in 1:dim(flood)[1]){
+  c=flood$Country[i]
+  if (substr(c,1,4)=="Phil"){flood$Country[i]='Philippines'}
+  if (substr(c,1,3)=="USA"){flood$Country[i]='USA'}
+  if (substr(c,1,3)=="Mold"){flood$Country[i]='Moldova'}
+  if (substr(c,1,5)=="Malay"){flood$Country[i]='Malaysia'}
+  if (substr(c,1,5)=="Urugu"){flood$Country[i]='Uruguay'}
+  if (substr(c,1,5)=="Zimba"){flood$Country[i]='Zimbabwe'}
+  if (substr(c,1,3)=="Vie"){flood$Country[i]='Vietnam'}
+  if (substr(c,1,5)=="Papua"){flood$Country[i]='Papua New Guinea'}
+  if (substr(c,1,5)=="Niger"){flood$Country[i]='Nigeria'}
+  if (substr(c,1,4)=="Guat"){flood$Country[i]='Guatemala'}
+}
+CC=read.csv("CC.csv")
+idx=match(flood$Country,CC$Country)
+idx[is.na(idx)]=sample(c(247,228,229,1),1)
+flood$Continent=CC$Continent[idx]
+
+#count length of news
+flood$newslen=lapply(flood$news,function(x) sapply(gregexpr("\\W+", x), length) + 1)
+
+flood_news=flood[flood$newslen>10,]
+```
+
+Then we mark the weight of each keyword in each category. For example, if 'killed' is a top keyword in 3% of news reporting on flood that causes deaths in (50,100) interval, we give it the weight 3.
+```{r tf-idf, include=FALSE}
+Dead=as.numeric(as.matrix(flood_news$Dead))
+Dead_l=c(0,0,10,50,100,500,1000)
+Dead_h=c(0,10,50,100,500,1000,10000)
+
+ids=(Dead>0)*(Dead<=10)
+ids=Map(function(x) as.logical(x),ids)
+ids=unlist(ids)
+
+#the function that does tfidf
+library(data.table)
+library(tm)
+library(wordcloud)
+#function to plot wordcloud..
+wordcloud_plot=function(x,dead){
+  d = Corpus(VectorSource(as.matrix(x$news))) #Make a corpus object from a text vector
+  dtm <- DocumentTermMatrix(d, control = list(weighting = weightTfIdf))
+  dtm=data.frame(as.matrix(dtm))
+  dtm=dtm[ , -which(names(dtm) %in% stopwords("english"))]
+  if(!is.na(which(names(dtm) %in% c("...",'flood','flooding','floods','flooded'))[1])) 
+  {dtm=dtm[ , -which(names(dtm) %in% c("..."))]}
+  
+  months=c('january','february','march','april','may','june','july','august','september','october','november','december')
+  dtm_copy=dtm
+  for (i in 1:12){idx=grep(months[i],colnames(dtm_copy))
+  if (!is.na(as.numeric(idx[1])==0)) #remove months
+  {dtm_copy=dtm_copy[,-idx]}}
+  dtm=dtm_copy
+  
+  words=names(dtm)
+  for (i in 1:dim(dtm)[2]) {if(substr(words[i],1,1)!="X") {break}}
+  #i = the number of cols starting with X  to be merged later
+  
+  print("X split done")
+  
+  dtm_X=dtm[,1:i-1]
+  dtm_posX=dtm[,i:dim(dtm)[2]]
+  removeX=function(x){
+    x= (gsub("X.","",x))
+    x= (gsub("X_","",x))
+    x= (gsub("_","",x))
+    x= (gsub(" ","",x))
+    if (substr(x,nchar(x),nchar(x))==".") {x=substr(x,1,nchar(x)-1)}
+    if (substr(x,nchar(x),nchar(x))==".") {x=substr(x,1,nchar(x)-1)}
+    if (substr(x,nchar(x),nchar(x))==".") {x=substr(x,1,nchar(x)-1)}
+    if (substr(x,nchar(x),nchar(x))==".") {x=substr(x,1,nchar(x)-1)}
+    if (substr(x,nchar(x),nchar(x))==".") {x=substr(x,1,nchar(x)-1)}
+    if (substr(x,1,1)==".") {x=substr(x,2,nchar(x))}
+    return (x)}
+  
+  #names(dtm_X)=apply(as.matrix(names(dtm_X)),1,removeX)
+  names(dtm_posX)=apply(as.matrix(names(dtm_posX)),1,removeX)
+  dtm_new=cbind(dtm_X,dtm_posX)
+  dtm_new=dtm_posX
+  dtm_new=t(dtm_new)
+  
+  #dtm_reduce=aggregate(dtm_new,list(rownames(dtm_new)),sum)
+  dtm_reduce=(dtm_new)
+  dtm_reduce=t(dtm_reduce)
+  
+  print ("groupby done")
+  
+  #high_kw=function(x) {
+  #  return (dtm_reduce[1,][order(x, decreasing=TRUE)[1:25]])}
+  
+  high_kw=function(x) {
+    return (names(dtm_posX)[order(x, decreasing=TRUE)[1:40]])}
+  
+  vec_kw=as.vector(apply(dtm_reduce,1,high_kw)[,-1]) #vec 25 * n_doc
+  print ("vec_kw done ")
+  c=merge(vec_kw,1)
+  c=aggregate(c[,2], list(c[,1]), sum)
+  
+  c=c[is.na(as.numeric(as.matrix(c$Group.1))),]
+  print ("c done ")
+  
+  for (j in 1:dim(c)[1]) {if(substr(c[j,1],1,1)=="a") {break}}
+  #word cloud
+  c=c[j:dim(c)[1],]
+  w=c[,1][order(c[,2], decreasing=TRUE)[1:40]]
+  w=as.matrix(w)
+  f=c[,2][order(c[,2], decreasing=TRUE)[1:40]]
+  #wordcloud(w, f)
+  #f=100*f/(dim(dtm_reduce)[2]-1)
+  return (data.frame(w,dead,100*f/(dim(dtm_reduce)[2]-1)))}
+```
+
+We keep these weights in a 43x7 matrix. 43 is the number of high-density keywords and 7 is the intervals of death numbers caused by floods.
+
+```{r word_dead, include=FALSE}
+word_dead=data.frame(0,0,0)
+colnames(word_dead)=c("word","dead","percent")
+for (i in 1:length(Dead_l)){
+        ids=(Dead>=Dead_l[i])*(Dead<=Dead_h[i])
+        ids=Map(function(x) as.logical(x),ids)
+        ids=unlist(ids)
+        x=flood_news[ids,]
+        df=wordcloud_plot(x,Dead_h[i])
+        colnames(df)=colnames(word_dead)
+        word_dead=rbind(word_dead,df)
+        print (Dead_l[i])}
+
+word_dead=word_dead[2:dim(word_dead)[1],]
+#add in missing words for consistency
+words=sort(unique(word_dead$word))
+
+for (i in 1:length(words))
+   for(j in 1:length(Dead_h)){
+     if(sum((word_dead$word==words[i])*(word_dead$dead==Dead_h[j]))==0)
+       {r=data.frame(words[i],Dead_h[j],0.0005)
+       colnames(r)=colnames(word_dead)
+       word_dead=rbind(word_dead,r)}}
+library(plyr)
+worddead=word_dead
+word_dead[word_dead$dead==0,]$dead=1
+word_dead=arrange(word_dead,-desc(word),dead)
+word_news=c('abandon','absorb','academic','account','accumulate','acres','across','activities','adjoining','aerial','area'
+            ,'bangladesh','catastrophe','caused','city','crippled','cyclone','damage','damaged','dead','days'
+            ,'desperation','destroyed','dying','evacuated','feb','flood','flooded','flooding','hectares','heavy','homes'
+            ,'inundated','killed','landslides','missing','maternity','rains','river','rushing','sept','rushing','submerged','village','worst','tropical')
+word_dead=word_dead[word_dead$word %in% word_news,]
+words=sort(unique(word_dead$word))
+library(ggplot2)
+attach(word_dead)
+ids=(dead==1)+(dead==10)+(dead==50)+(dead==100)+(dead==500)+(dead==1000)+(dead==10000)
+ids=Map(function(x) as.logical(x),ids)
+ids=unlist(ids)
+word_dead1=word_dead[ids,]
+word_dead2=word_dead1[word_dead1$word %in% unique(words)[1:length(words)],]
+if ('0' %in% words) {word_dead2=word_dead2[8:dim(word_dead2)[1],]}
+#gg=ggplot(word_dead2, aes(x=log(as.numeric(as.character(dead))), y=percent))
+#gg + geom_area(aes(colour=word, fill=word))
+```
+
+Here is a word cloud we generate, looking at floods causing deaths between 50 and 100. The keywords such as 'caused','desperation' and 'sept' appear large in size, indicating they tend to occur frequently in newsreporting on floods of this scale. 
+
+```{r wordcloud_prep, include=TRUE}
+library(d3heatmap)
+wd=as.vector(word_dead2$percent)
+wd=matrix(wd,nrow=length(words))
+#dim(wd)=c(length(word_news),7)
+wd=data.frame(wd)
+colnames(wd)= unlist(lapply(Dead_h,function(x) paste('Deaths <=',x)))
+rownames(wd)=sort(unique(word_dead2$word))
+wd[wd==0.0005]=0
+wd=wd*10
+if (0 %in% rownames(wd)){wd=wd[2:dim(wd)[1],]}
+wordcloud(words,wd[,4])
+
+```
+
+Interestingly, comparing the above word cloud against newsreporting on flood causing deaths between 100 and 500, we immediately see a difference. Now words such as'feb','evacuated' and 'inundated' get more dense.
+```{r wordcloud, include=TRUE}
+wordcloud(words,wd[,5])
+```
+
+
+Finally we plot an interactive heatmap to explore how these keywords change their density in newsporting, as the severity of floods increase.
+```{r heatmap, include=TRUE}
+d3heatmap(wd, Colv=FALSE,scale = "column", colors = "Spectral",xaxis_font_size="10px")
+```
+
+The heatmap performs a dendrogram clustering on words. As one may expect, we see 'flood' and 'flooded' nearby each other in the clustering while 'feb' and 'sept' are far away on the spectrum. Perhaps more interestingly, we observe that keyword such as 'abandon' is most dense in reportings on floods with deaths <=50.
+
+
+##What Caused the Floods
+
+In this section we look at the causes of the floods. We pick the most popular 6 causes and do a string matching to categorize the floods.
+```{r cause_prep, include=FALSE}
+library(maps)
+library(ggplot2)
+world=map_data('world')
+causes=c('tropical','typhoon','rain','monsoon','dam','snow')
+```
+
+```{r cause_prep2, include=FALSE}
+flood$causes=NA
+for (i in 1:6){
+idx=grep(causes[i],flood$Main.cause,ignore.case=TRUE)
+flood$causes[idx]=causes[i]}
+flood_cause=flood[!is.na(flood[,34]), ]
+flood_cause=flood_cause[flood_cause[,19]>0, ]
+```
+
+We project the floods in past 6 years (2010-2015) onto the map. The area of the dots indicate the affecte area of the floods. We see some easily recognible patterns: majority of floods are caused by rain(green dots); moonsoon-caused floods (brown dots) are dominant in South Asia and East China. Tropical storms are, as the name suggests, popular in tropical area and so are the floods caused by them. Rare in frequency, floods caused by snow are mainly in high-latitude regions such as Russia and Kazakhstan
+```{r cause_map, include=TRUE,,warning=FALSE}
+p <- ggplot()
+p <- p + geom_polygon( data=world, aes(x=long, y=lat, group = group),colour="white", fill="grey10" )
+p <- p + geom_jitter( data=flood_cause[as.numeric(as.matrix(flood_cause$year))>=2010,], position=position_jitter(width=0.5, height=0.5),
+    aes(x=as.numeric(as.matrix(Centroid.X)), 
+     y=as.numeric(as.matrix(Centroid.Y)),size=as.numeric(as.matrix(Area)),color=causes,alpha=0.5)) 
+p=p+scale_size('area')
+p=p+ggplot2::annotate("text", label = "causes of world flood 2010-2015", x = 12, y = 100, size = 8, colour ="black")
+p
+```
+
+##PCA on countries
+In this section, we explore a PCA on countries that experienced floods in a given year. Here we choose 7 variables from the GlobalFloodArchive data, namely Affected Area, Severity, Magnitude, Dead, Dispatched,Latitude and Longitude. 
+
+```{r pca_prep, include=FALSE}
+library(scales)
+PCAcc=function(yr){
+x=flood[as.numeric(as.matrix(flood$year))==yr,]
+temp=x[,c(4,12:14,17,18,20,21)]
+temp=temp[as.matrix(temp$Dead)>=10,]
+cc=temp$Country
+temp=data.frame(data.matrix(temp))
+temp$Country=cc
+
+temp_avg=aggregate(temp[, 2:8], list(temp$Country), mean) #do we need this?
+pca_existing <- prcomp(data.frame(temp[,c(2:8)]), scale. = TRUE)
+projected <- as.data.frame(pca_existing$x)
+# Show first two PCs for head countries
+projected$country=temp$Country
+
+ramp <- colorRamp(c("green", "red"))
+ratio=temp$Dead/temp$Severity..
+colours_by_ratio <- rgb( 
+  ramp( as.vector(rescale(ratio,c(0,1)))), 
+  max = 255 )
+plot(PC1~PC2, data=projected, main= paste("PCA on flooded countries in ",yr),cex = .1, lty = "solid",col=colours_by_ratio,bg='white' )
+text(PC1~PC2, data=projected, labels=projected$country,cex=.8,col=colours_by_ratio)}
+```
+
+We use a PCA dimensionality reduction to project the 7 chosen dimensions onto 2. Also we would like to investigate if there are clustering on these countries. We use a color coding from green to red that indicates the ratio of deaths against severity of the flood. This color thus indicates how damaging this flood is. The more shifted on the red, the more damaging it is.
+
+In this example we focus on floods in year 2000
+```{r pca, include=TRUE,warning=FALSE}
+PCAcc(2000)
+```
+
+We observe some clustering, such as the 4 floods in Brazil in the top part and the 2 floods in India in the bottom. The 2 PCs may be intepreted such that PC2 corresponds to how damaging a flood is, as most country-flood pairs in the upper half are red while the ones in the bottm are green
+
+However, we do notice that there isn't any clear classification on this plot between developped countries and developing countries. USA and Philippines are close to each other in the center and so are France and India on the left. Perhaps this suggests that flood is more of a global disaster regardless of the GDP or geo-location of a country.
