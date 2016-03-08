@@ -13,7 +13,7 @@ library(devtools)
 library(ggbiplot)
 library(lattice)
 
-
+setwd('~/Desktop/Columbia/EDAV/Project2')
 
 # Import the two datasets
 ncin <- nc_open("NOAA_Daily_phi_500mb.nc")
@@ -31,17 +31,18 @@ Here we show basic flooding statistics. The following graphs represent the numbe
 # Format dates for parsing
 df_ian = data.frame(as.Date(flood_df$Began, "%e-%b-%y"))
 names(df_ian) = c("newDate")
+df_ian2 = subset(df_ian, newDate >= "1985-01-01" & newDate <= "2008-01-01")
 
 ##### Trellis plot for flood counts per year
 histogram(
   ~factor(
-    format(df_ian$newDate,"%b"),
+    format(df_ian2$newDate,"%b"),
     levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
   ) | factor(
-    format(newDate,"%Y"),
-    level = c("85", "86", "87", "88", "89", "90", "91", "92", "3", "94", "95")
+    format(df_ian2$newDate,"%y"),
+    level = c("85", "86", "87", "88", "89", "90", "91", "92", "3", "94", "99", "00", "01", "02", "03", "04", "05", "06", "07", "08")
   ),
-  data=df_ian, layout=(c(3,6)),
+  data=df_ian2, layout=(c(3,6)),
   main="Flood Counts by year and month",
   ylab="Flood Count",
   xlab="Year"
