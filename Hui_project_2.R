@@ -1,7 +1,7 @@
 library(ncdf4)
 library(RNetCDF)
 library(rworldmap)
-gf <- read.csv(file="~/Documents/columbia 2016Spring/EDAV/project/EDAV_Project_2/GlobalFloodsRecord.csv", header=TRUE, sep=",")
+gf <- read.csv(file="~/Desktop/Columbia/EDAV/Project2/GlobalFloodsRecord.csv", header=TRUE, sep=",")
 flood.month.data = data.frame(Longitude=as.numeric(as.character(gf$Centroid.X)),Latitude=as.numeric(as.character(gf$Centroid.Y)),
                               Magnitude=as.numeric(gf$Magnitude..M...), month=format(as.Date(gf$Began,format='%d-%b-%y'),"%m"))
 month=c("01","02","03","04","05","06","07","08","09","10","11","12")

@@ -6,6 +6,13 @@ output:
     theme: readable
 ---
 ## Introduction
+In this report, we summarize data from two datasets, one on geopotential height values in the northern hemisphere global region ranging from 35 degrees N to 70 degrees N, with a time dimensions ranging from 1944 to the present, and the other with details of flooding events from the time period ranging from 1985 to 2016. We present this data using visual representations that show the overall trends, and we gain insights into the trends and relationships between the following variables:
+
+- average geopotential height values across this time period
+- number of flooding events per year
+- average area affected by events
+- variation in amount of flooding between years
+- financial damage cause by these events
 
 ## Monthly Flood Timeline
 Here we present an interactive timeline of the flooding events from 1985 to 2015. The size of the circles indicate the number of people that were displaced as a result of the flood. You can pause the timeline and hover over specific flooding event to find out more details about it.
@@ -32,10 +39,10 @@ Here we present an interactive timeline of the flooding events from 1985 to 2015
 ```{r setup, include=FALSE}
 # Put your libs here:
 library(ncdf4)
+library(RNetCDF)
 library(ggplot2)
-library(devtools)
-# library(ggbiplot)
 library(lattice)
+library(rworldmap)
 
 # Import the two datasets
 ncin <- nc_open("NOAA_Daily_phi_500mb.nc")
@@ -163,7 +170,6 @@ df_c[,num.cols] <- sapply(df_c[,num.cols], as.numeric)
 df_c$X <- NULL
 
 ```
-
 
 ### Affected sq. km
 The following diagrams are lattice plots for the average area in square kilometers affected by floods per month and per year. This information is broken up into two full decades: the 1990s and the 2000s.
@@ -322,3 +328,7 @@ ggplot(Floods_AllYears_Affected,aes(x=YEAR,y=Affected.sq.km))+
   geom_bar(stat="identity")+labs(x="Year",y="Affected sq. km.",
                                  title="Average Affected sq. km. Per Year")
 ```
+=======
+
+## Conclusion
+From out ANOVA analysis we conclude that there is a statisitcally sigificant difference between the value of the damaged caused by flooding in the 1990s and the 2000s. We also can see from the graphs that flood events occur around rivers and coastal regions, and when coupled with trellis plots of flooding events across months by year, there appear to be time periods of increased flooding that coorespond with months in late summer. 
