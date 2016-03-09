@@ -545,12 +545,18 @@ Interestingly, comparing the above word cloud against newsreporting on flood cau
 wordcloud(words,wd[,5])
 ```
 
-Finally we show an interactive heatmap to explore how the keywords change their density in newsporting, as the severity of floods increase.
-```{r heatmap, include=TRUE, echo=FALSE, fig.align='center'}
-d3heatmap(wd, Colv=FALSE,scale = "column", colors = "Spectral",xaxis_font_size="10px")
+Finally we plot an interactive heatmap to explore how these keywords change their density in newsporting, as the severity of floods increase.
+```{r heatmap, include=TRUE}
+#d3heatmap(wd, Colv=FALSE,dendrogram='none',scale = "column", colors = "Spectral",xaxis_font_size="8px")
+wd=data.matrix(wd)
+library(RColorBrewer)
+library(plotrix)
+palf <- colorRampPalette(c("gold", "dark orange")) 
+heatmap(wd, Rowv = NA, Colv = NA, col = palf(100),scale="none", margins=c(5,2),cexRow=0.8,cexCol=0.7)
+
 ```
 
-The heatmap performs a dendrogram clustering on words. As one may expect, we see 'flood' and 'flooded' nearby each other in the clustering while 'feb' and 'sept' are far away on the spectrum. Perhaps more interestingly, we observe that keyword such as 'abandon' is most dense in reportings on floods with deaths <=50.
+We notice that 'feb' is most dense on floods causing deaths between 100 and 500 while 'sept' is most dense on deaths causing 0 deaths. This may suggest an association in seasonality and severity of floods. Also interestingly, we observe that keyword such as 'abandon' is most dense in reportings on floods with deaths <=50.
 
 ## Causes of Floods
 In this section we look at the causes of the floods. We pick the most popular 6 causes and do a string matching to categorize the floods.
@@ -578,7 +584,8 @@ p <- p + geom_jitter( data=flood_cause[as.numeric(as.matrix(flood_cause$year))>=
     aes(x=as.numeric(as.matrix(Centroid.X)), 
      y=as.numeric(as.matrix(Centroid.Y)),size=as.numeric(as.matrix(Area)),color=causes,alpha=0.5)) 
 p=p+scale_size('area')
-p=p+ggplot2::annotate("text", label = "Causes of Floods Around the World", x = 12, y = 100, size = 8, colour ="black")
+
+p=p+ggplot2::annotate("text", label = "causes of world flood 2010-2015", x = 12, y = 100, size = 8, colour ="black")
 p
 ```
 
@@ -723,4 +730,4 @@ multiplot(map9,map10,map11,map12,cols=2)
 ```
 
 ## Conclusion
-From out ANOVA analysis we conclude that there is a statisitcally sigificant difference between the value of the damaged caused by flooding in the 1990s and the 2000s. We also can see from the graphs that flood events occur around rivers and coastal regions, and when coupled with trellis plots of flooding events across months by year, there appear to be time periods of increased flooding that coorespond with months in late summer. 
+From our ANOVA analysis we conclude that there is a statisitcally sigificant difference between the value of the damaged caused by flooding in the 1990s and the 2000s. We also can see from the graphs that flood events occur around rivers and coastal regions, and when coupled with trellis plots of flooding events across months by year, there appear to be time periods of increased flooding that coorespond with months in late summer. 
