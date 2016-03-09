@@ -24,9 +24,12 @@ var format = d3.time.format("%d-%b-%y"),
 		color_scale = d3.scale.category20()
 		numberFormat = d3.format(',');
 
+// queue()
+// 	.defer(d3.json, "data/WorldMap.json")
+// 	.defer(d3.csv, "data/GlobalFloodsRecord_d3.csv")
 queue()
-	.defer(d3.json, "data/WorldMap.json")
-	.defer(d3.csv, "data/GlobalFloodsRecord_d3.csv")
+	.defer(d3.json, "https://dl.dropboxusercontent.com/u/532771/edav_p2/WorldMap.json")
+	.defer(d3.csv, "https://dl.dropboxusercontent.com/u/532771/edav_p2/GlobalFloodsRecord_d3.csv")
 	.await(function(error, world_json, floods_data) {
 		var countries = world_json['features'];
 
@@ -233,17 +236,17 @@ queue()
 
 		// Play/pause controls logic
 		$('#play-pause-link').click(function(){
-			if ($(this).text() == "❙❙ Pause") {
+			if ($(this).text() == "Pause") {
 				// The user hit pause
 				paused = true;
-				$(this).text("▶ Play");
+				$(this).text("Play");
 			}
 			else {
 				// The user hit play
 				paused = false;
 				clear_circles();
 				play_loop();
-				$(this).text("❙❙ Pause");
+				$(this).text("Pause");
 			}
 		});
 
